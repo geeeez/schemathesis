@@ -8,7 +8,7 @@ from enum import Enum
 from queue import Queue
 from typing import Any, Callable, Dict, Generator, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlparse
-
+from fastapi import HTTPException
 import attr
 import click
 import hypothesis
@@ -541,7 +541,7 @@ def run(
     no_color: bool = False,
     schemathesis_io_token: Optional[str] = None,
     schemathesis_io_url: str = service.DEFAULT_URL,
-) -> None:
+) -> str:
     """Perform schemathesis test against an API specified by SCHEMA.
 
     SCHEMA must be a valid URL or file path pointing to an Open API / GraphQL specification.
@@ -600,7 +600,8 @@ def run(
         stateful_recursion_limit=stateful_recursion_limit,
         hypothesis_settings=hypothesis_settings,
     )
-    execute(
+    # modify_by_me
+    result_message = execute(
         event_stream,
         workers_num,
         show_errors_tracebacks,
@@ -613,6 +614,8 @@ def run(
         schemathesis_io_token,
         schemathesis_io_url,
     )
+    # 返回扫描状态 错误/0/1
+    return result_message
 
 
 def prepare_request_cert(cert: Optional[str], key: Optional[str]) -> Optional[RequestCert]:
@@ -725,6 +728,8 @@ def into_event_stream(
             hypothesis_settings=hypothesis_settings,
         ).execute()
     except Exception as exc:
+        # ----modify_by_me----
+        # ----modify_by_me----
         yield events.InternalError.from_exc(exc)
 
 
@@ -876,7 +881,7 @@ def execute(
     debug_output_file: Optional[click.utils.LazyFile],
     schemathesis_io_token: Optional[str],
     schemathesis_io_url: str,
-) -> None:
+) -> str:
     """Execute a prepared runner by drawing events from it and passing to a proper handler."""
     handlers: List[EventHandler] = []
     if junit_xml is not None:
@@ -913,19 +918,31 @@ def execute(
         for event in event_stream:
             for handler in handlers:
                 handler.handle_event(execution_context, event)
-    except Exception as exc:
-        if isinstance(exc, click.Abort):
+    # ----modify_by_me----
+    # except Exception as exc:
+    except Exception as e:
+        # ----modify_by_me----
+        print(event)
+        print(event.__class__)
+        result = event.message + event.exception_type + event.exception
+        return result
+        # raise HTTPException(status_code=500, detail=result)
+        # ----modify_by_me----
+        if isinstance(e, click.Abort):
             # To avoid showing "Aborted!" message, which is the default behavior in Click
-            sys.exit(1)
+            #sys.exit(1)
+            return 1
         raise
     finally:
         shutdown()
     if event is not None and event.is_terminal:
         exit_code = get_exit_code(event)
-        sys.exit(exit_code)
+        #sys.exit(exit_code)
+        return exit_code
     # Event stream did not finish with a terminal event. Only possible if the handler is broken
     click.secho("Unexpected error", fg="red")
-    sys.exit(1)
+    #sys.exit(1)
+    return 1
 
 
 def get_exit_code(event: events.ExecutionEvent) -> int:
