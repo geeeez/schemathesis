@@ -14,7 +14,7 @@ except metadata.PackageNotFoundError:
 
 IS_PYTEST_ABOVE_54 = version.parse(pytest.__version__) >= version.parse("5.4.0")
 
-USER_AGENT = f"schemathesis/{__version__}"
+USER_AGENT = f"Tianlang/{__version__}"
 # Maximum test running time
 DEFAULT_DEADLINE = 15000  # pragma: no mutate
 DEFAULT_RESPONSE_TIMEOUT = 10000  # pragma: no mutate

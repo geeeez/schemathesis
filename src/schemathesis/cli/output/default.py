@@ -418,7 +418,8 @@ def handle_initialized(context: ExecutionContext, event: events.Initialized) -> 
     versions = (
         f"platform {platform.system()} -- "
         f"Python {platform.python_version()}, "
-        f"schemathesis-{__version__}, "
+        # modify by me
+        f"Tianlang-{__version__}, "
         f"hypothesis-{metadata.version('hypothesis')}, "
         f"hypothesis_jsonschema-{metadata.version('hypothesis_jsonschema')}, "
         f"jsonschema-{metadata.version('jsonschema')}"
