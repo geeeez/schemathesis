@@ -922,16 +922,16 @@ def execute(
     # except Exception as exc:
     except Exception as e:
         # ----modify_by_me----
-        print(event)
-        print(event.__class__)
-        result = event.message + event.exception_type + event.exception
-        return result
+        if isinstance(event, runner.events.InternalError):
+            result = event.message + event.exception_type + event.exception
+            # 满足两个返回值，None这里没有实际用处，为了更好区分扫描状态。
+            return result,None
         # raise HTTPException(status_code=500, detail=result)
         # ----modify_by_me----
         if isinstance(e, click.Abort):
             # To avoid showing "Aborted!" message, which is the default behavior in Click
             #sys.exit(1)
-            return 1
+            return 1,None
         raise
     finally:
         shutdown()
@@ -942,17 +942,17 @@ def execute(
     # Event stream did not finish with a terminal event. Only possible if the handler is broken
     click.secho("Unexpected error", fg="red")
     #sys.exit(1)
-    return 1
+    return 1,None
 
 
-def get_exit_code(event: events.ExecutionEvent) -> int:
+def get_exit_code(event: events.ExecutionEvent) -> [int,str]:
     if isinstance(event, events.Finished):
         if event.has_failures or event.has_errors:
-            return 1
-        return 0
+            return 1,event
+        return 0,event
     # Practically not possible. May occur only if the output handler is broken - in this case we still will have the
     # right exit code.
-    return 1
+    return 1,None
 
 
 @schemathesis.command(short_help="Replay requests from a saved cassette.")

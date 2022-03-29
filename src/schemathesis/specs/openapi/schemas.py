@@ -466,6 +466,8 @@ class BaseOpenAPISchema(BaseSchema):
             else:
                 data = response.json
         except JSONDecodeError as exc:
+            # print(response.headers.get("Content-Type"))
+            # print(response)
             exc_class = get_response_parsing_error(exc)
             payload = get_response_payload(response)
             raise exc_class(
